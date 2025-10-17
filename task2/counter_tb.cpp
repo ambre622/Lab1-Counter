@@ -23,10 +23,10 @@ int main(int argc, char **argv, char **env) {
     // Initialize simulation inputs (only top-level signals are visible)
     top->clk = 1;
     top->rst = 1;
-    top->en  = 0;
+    top->en  = 1;   // initial direction (1=up)
 
     // Run simulation for many clock cycles
-    for (i = 0; i < 300; i++) {      // This is the for-loop where simulation happens. i counts the clock cycles.
+    for (i = 0; i < 2000; i++) {      // This is the for-loop where simulation happens. i counts the clock cycles.
 
         //1 full clk cycle
         // Dump variables into VCD file and toggle clock
@@ -39,15 +39,23 @@ int main(int argc, char **argv, char **env) {
         // ---- show counter value on Vbuddy 7-seg (hex) ----
         // Four hex digits: [4]=MSN ... [1]=LSN
         //send count value to Vbuddy
+        /*
         vbdHex(4, (int(top->count) >> 16) & 0xF);
         vbdHex(3, (int(top->count) >> 8) & 0xF);
         vbdHex(2, (int(top->count) >> 4) & 0xF);
         vbdHex(1, int(top->count) & 0xF);
         vbdCycle(i + 1);
+        */        
         //end of Vbuddy output section
 
+        // --- TFT plot instead of 7-seg ---
+        // If your counter is wider than 8 bits, mask to 0..255 for the plot range.
+        int val = int(top->count) & 0xFF;
+        vbdPlot(val, 0, 255);   // draw a point; auto-scrolls with vbdCycle
+        vbdCycle(i + 1);
+
         // Change input stimuli
-        top->rst = (i < 2) | (i == 15); // Assert reset for first 2 cycles and once again at cycle 15
+        top->rst = (i < 2); // Assert reset for first 2 cycles and once again at cycle 15
         top->en  = vbdFlag();
         if (Verilated::gotFinish()) exit(0);
     }
